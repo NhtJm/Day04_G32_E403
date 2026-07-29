@@ -89,7 +89,7 @@ def load_artifacts(prompt_path: Path, tools_path: Path):
     return system_prompt, declarations, to_openai_tools(declarations)
 
 
-def render_tool_event(event: dict[str, Any], key: str) -> None:
+def render_tool_event(event: dict[str, Any]) -> None:
     result = event.get("result", {})
     status = classify(result)
     icon, label = STATUS_STYLE[status]
@@ -127,8 +127,8 @@ def render_turn(turn: dict[str, Any], turn_key: str) -> None:
         st.markdown(f"**Round {idx}** — {len(calls)} tool call: " + ", ".join(f"`{c['name']}`" for c in calls))
         if round_record.get("assistant_text"):
             st.caption(round_record["assistant_text"][:300])
-        for i, event in enumerate(round_record.get("tool_results", [])):
-            render_tool_event(event, f"{turn_key}_r{idx}_t{i}")
+        for event in round_record.get("tool_results", []):
+            render_tool_event(event)
 
 
 def main() -> None:
@@ -188,7 +188,11 @@ def main() -> None:
             st.rerun()
 
     default_text = SCENARIOS.get(picked, "")
-    user_text = st.chat_input("Nhập yêu cầu…") or (default_text if st.button("▶️ Chạy kịch bản đã chọn", disabled=not default_text) else None)
+    # Both widgets must render every run — short-circuiting the button behind
+    # `or` makes it vanish from the page on any turn typed into the chat box.
+    run_scenario = st.button("▶️ Chạy kịch bản đã chọn", disabled=not default_text)
+    typed = st.chat_input("Nhập yêu cầu…")
+    user_text = typed or (default_text if run_scenario else None)
 
     for i, turn in enumerate(st.session_state.turns):
         with st.chat_message("user"):
