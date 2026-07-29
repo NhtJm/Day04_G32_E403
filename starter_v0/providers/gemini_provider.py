@@ -2,94 +2,112 @@ from __future__ import annotations
 
 import json
 import os
-import re
 import time
 from typing import Any
 
 from providers.base import ModelResponse, ToolCall
 
-# Gemini free tier allows 5 requests/minute/model. Without pacing, a 20-case eval
-# burns the quota after case 5 and the rest come back as 429 provider errors,
-# which makes `measured_cases < total_cases` and invalidates every metric.
-_MIN_INTERVAL_SEC = float(os.getenv("GEMINI_MIN_INTERVAL_SEC", "13"))
-_MAX_RETRIES = int(os.getenv("GEMINI_MAX_RETRIES", "4"))
-_last_call_at = 0.0
 
-
-def _throttle() -> None:
-    global _last_call_at
-    wait = _last_call_at + _MIN_INTERVAL_SEC - time.monotonic()
-    if wait > 0:
-        time.sleep(wait)
-    _last_call_at = time.monotonic()
-
-
-def _retry_delay_from(exc: Exception) -> float | None:
-    match = re.search(r"'retryDelay':\s*'(\d+(?:\.\d+)?)s'", str(exc))
-    return float(match.group(1)) if match else None
-
-
-def _is_rate_limited(exc: Exception) -> bool:
-    text = str(exc)
-    return "429" in text or "RESOURCE_EXHAUSTED" in text
-
-
-def _to_gemini_declarations(tools: list[dict[str, Any]] | None) -> list[dict[str, Any]]:
+def _to_gemini_declarations(
+    tools: list[dict[str, Any]] | None,
+) -> list[dict[str, Any]]:
     declarations: list[dict[str, Any]] = []
+
     for item in tools or []:
         function = item.get("function", item)
-        declarations.append({
-            "name": function["name"],
-            "description": function.get("description", ""),
-            "parameters": function.get("parameters", {"type": "object", "properties": {}}),
-        })
+
+        declarations.append(
+            {
+                "name": function["name"],
+                "description": function.get("description", ""),
+                "parameters": function.get(
+                    "parameters",
+                    {
+                        "type": "object",
+                        "properties": {},
+                    },
+                ),
+            }
+        )
+
     return declarations
 
 
-def _to_gemini_contents(messages: list[dict[str, str]]) -> tuple[str | None, list[dict[str, Any]]]:
+def _to_gemini_contents(
+    messages: list[dict[str, str]],
+) -> tuple[str | None, list[dict[str, Any]]]:
     system_parts: list[str] = []
     contents: list[dict[str, Any]] = []
+
     for msg in messages:
         role = msg.get("role")
         content = msg.get("content", "")
+
         if role == "system":
             system_parts.append(content)
+
         elif role == "assistant":
-            contents.append({"role": "model", "parts": [{"text": content}]})
+            contents.append(
+                {
+                    "role": "model",
+                    "parts": [{"text": content}],
+                }
+            )
+
         elif role == "user":
-            contents.append({"role": "user", "parts": [{"text": content}]})
-    return ("\n\n".join(system_parts) if system_parts else None), contents
+            contents.append(
+                {
+                    "role": "user",
+                    "parts": [{"text": content}],
+                }
+            )
+
+    system_instruction = (
+        "\n\n".join(system_parts)
+        if system_parts
+        else None
+    )
+
+    return system_instruction, contents
 
 
 def _part_text(part: Any) -> str | None:
     if hasattr(part, "text"):
         return getattr(part, "text")
+
     if isinstance(part, dict):
         return part.get("text")
+
     return None
 
 
 def _part_function_call(part: Any) -> Any | None:
     if hasattr(part, "function_call"):
         return getattr(part, "function_call")
+
     if isinstance(part, dict):
         return part.get("function_call")
+
     return None
 
 
 def _function_call_name(call: Any) -> str | None:
     if hasattr(call, "name"):
         return getattr(call, "name")
+
     if isinstance(call, dict):
         return call.get("name")
+
     return None
 
 
 def _function_call_args(call: Any) -> dict[str, Any]:
     if hasattr(call, "args"):
         return dict(getattr(call, "args") or {})
+
     if isinstance(call, dict):
         return dict(call.get("args") or {})
+
     return {}
 
 
@@ -117,72 +135,154 @@ class GeminiProvider:
         try:
             from google import genai
             from google.genai import types
+
         except ImportError as exc:
-            raise RuntimeError("Install live provider dependency first: pip install google-genai") from exc
+            raise RuntimeError(
+                "Install live provider dependency first: "
+                "pip install google-genai"
+            ) from exc
 
         api_key = os.getenv(self.api_key_env)
+
         if not api_key:
-            raise RuntimeError(f"Missing API key env var: {self.api_key_env}")
+            raise RuntimeError(
+                f"Missing API key env var: {self.api_key_env}"
+            )
 
         system_instruction, contents = _to_gemini_contents(messages)
         declarations = _to_gemini_declarations(tools)
-        config_kwargs: dict[str, Any] = {"temperature": temperature}
+
+        config_kwargs: dict[str, Any] = {
+            "temperature": temperature,
+        }
+
         if system_instruction:
             config_kwargs["system_instruction"] = system_instruction
+
         if declarations:
-            config_kwargs["tools"] = [types.Tool(function_declarations=declarations)]
-            # Mirror the other providers: "required" must actually force a tool call,
-            # otherwise Gemini runs under AUTO while OpenAI/Anthropic run under ANY
-            # and the two runs are not comparable.
-            mode = "ANY" if tool_choice == "required" else "AUTO"
-            config_kwargs["tool_config"] = types.ToolConfig(
-                function_calling_config=types.FunctionCallingConfig(mode=mode)
-            )
+            config_kwargs["tools"] = [
+                types.Tool(
+                    function_declarations=declarations
+                )
+            ]
 
         client = genai.Client(api_key=api_key)
-        resp = None
-        for attempt in range(_MAX_RETRIES):
-            _throttle()
+
+        max_retries = 5
+        base_wait_seconds = 20
+
+        for attempt in range(max_retries):
             try:
                 resp = client.models.generate_content(
                     model=model or self.default_model,
                     contents=contents,
-                    config=types.GenerateContentConfig(**config_kwargs),
+                    config=types.GenerateContentConfig(
+                        **config_kwargs
+                    ),
                 )
+
                 break
+
             except Exception as exc:
-                if not _is_rate_limited(exc) or attempt == _MAX_RETRIES - 1:
+                error_message = str(exc)
+
+                is_quota_error = (
+                    "429" in error_message
+                    or "RESOURCE_EXHAUSTED" in error_message
+                    or "Quota exceeded" in error_message
+                )
+
+                if not is_quota_error:
                     raise
-                time.sleep((_retry_delay_from(exc) or 2 ** attempt * 15) + 1)
+
+                if attempt == max_retries - 1:
+                    raise RuntimeError(
+                        "Gemini quota exceeded after "
+                        f"{max_retries} attempts: "
+                        f"{error_message}"
+                    ) from exc
+
+                wait_seconds = base_wait_seconds * (attempt + 1)
+
+                print(
+                    "Gemini quota exceeded. "
+                    f"Retrying in {wait_seconds}s "
+                    f"({attempt + 1}/{max_retries - 1})...",
+                    flush=True,
+                )
+
+                time.sleep(wait_seconds)
 
         text_parts: list[str] = []
         calls: list[ToolCall] = []
 
         def append_call(function_call: Any) -> None:
             name = _function_call_name(function_call)
-            if name:
-                calls.append(ToolCall(name=name, args=_function_call_args(function_call)))
 
-        for candidate in getattr(resp, "candidates", []) or []:
-            content = getattr(candidate, "content", None)
-            for part in getattr(content, "parts", []) or []:
+            if name:
+                calls.append(
+                    ToolCall(
+                        name=name,
+                        args=_function_call_args(function_call),
+                    )
+                )
+
+        for candidate in getattr(
+            resp,
+            "candidates",
+            [],
+        ) or []:
+            content = getattr(
+                candidate,
+                "content",
+                None,
+            )
+
+            for part in getattr(
+                content,
+                "parts",
+                [],
+            ) or []:
                 text = _part_text(part)
+
                 if text:
                     text_parts.append(text)
+
                 function_call = _part_function_call(part)
+
                 if function_call:
                     append_call(function_call)
 
-        # Some SDK versions expose function calls directly on the response.
-        for function_call in getattr(resp, "function_calls", []) or []:
+        for function_call in getattr(
+            resp,
+            "function_calls",
+            [],
+        ) or []:
             append_call(function_call)
 
         deduped_calls: list[ToolCall] = []
         seen: set[tuple[str, str]] = set()
+
         for call in calls:
-            key = (call.name, json.dumps(call.args, ensure_ascii=False, sort_keys=True))
+            key = (
+                call.name,
+                json.dumps(
+                    call.args,
+                    ensure_ascii=False,
+                    sort_keys=True,
+                ),
+            )
+
             if key not in seen:
                 seen.add(key)
                 deduped_calls.append(call)
 
-        return ModelResponse(text="\n".join(part for part in text_parts if part) or None, tool_calls=deduped_calls, raw=resp)
+        return ModelResponse(
+            text="\n".join(
+                part
+                for part in text_parts
+                if part
+            ) or None,
+            tool_calls=deduped_calls,
+            raw=resp,
+        )
