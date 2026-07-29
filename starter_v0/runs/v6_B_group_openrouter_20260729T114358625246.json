@@ -1,0 +1,907 @@
+{
+  "run_id": "v6_B_group_openrouter_20260729T114358625246",
+  "version": "v6",
+  "artifact_version": "v6+pffa8905cd235+t024a3d14b87e",
+  "prompt_hash": "ffa8905cd23535183b7d557751074f03e81f47b21808e5a8bb0c2d77e82ea39f",
+  "tools_hash": "024a3d14b87e797fe2c60f7d799c13d2787175ca6537aba66837cc23b47b932b",
+  "phase": "B",
+  "suite": "group",
+  "provider": "openrouter",
+  "model": "openai/gpt-4o-mini",
+  "system_prompt": "/Users/nhatnguyen/Desktop/AIA/labs/Day04_G32_E403/starter_v0/artifacts/system_prompt.md",
+  "tools": "/Users/nhatnguyen/Desktop/AIA/labs/Day04_G32_E403/starter_v0/artifacts/tools.yaml",
+  "eval_cases": "data/eval_group.json",
+  "dataset_id": "day04_v2_research_group",
+  "dataset_role": "group",
+  "description": "10 case do nhóm G32 tự thiết kế: 5 single-turn (query) + 5 multi-turn (turns). Trọng tâm là các ranh giới mà base eval không chạm tới: boundary của action tool thứ hai (save_note), ranh giới hn_top vs lookup theo CẢ HAI chiều, tool call thừa khi user rút lại yêu cầu, và trường hợp user bổ sung thông tin nhưng VẪN thiếu thứ bắt buộc.",
+  "generated_at": "2026-07-29T11:43:58",
+  "summary": {
+    "total_cases": 10,
+    "measured_cases": 10,
+    "provider_error_cases": 0,
+    "passed_cases": 8,
+    "case_accuracy": 0.8,
+    "tool_routing_accuracy": 0.9,
+    "argument_accuracy": 0.8,
+    "multiturn_accuracy": 0.8,
+    "failure_counts": {
+      "wrong_arg_value": 1,
+      "wrong_boundary": 1
+    },
+    "observed_mismatch_counts": {
+      "wrong_arg_value": 1,
+      "missing_tool_call": 1
+    }
+  },
+  "results": [
+    {
+      "id": "G01_hn_routing_forward",
+      "phase": "B",
+      "suite": "group",
+      "case_suite": "group",
+      "is_multiturn": false,
+      "metadata": {
+        "skill": "routing_hn_forward",
+        "difficulty": "easy",
+        "what_it_tests": "User nhắc đích danh Hacker News → hn_top, không phải lookup. Chiều thuận của ranh giới tool mới."
+      },
+      "input": "Trên Hacker News đang bàn gì về Rust?",
+      "expect": {
+        "tool_calls": [
+          {
+            "name": "hn_top",
+            "args": {
+              "query": "Rust"
+            }
+          }
+        ]
+      },
+      "result": {
+        "passed": true,
+        "routing_correct": true,
+        "args_correct": true,
+        "actual_tool_calls": [
+          {
+            "name": "hn_top",
+            "args": {
+              "query": "Rust"
+            }
+          }
+        ],
+        "actual_text": null,
+        "case_failure_type": "wrong_tool",
+        "observed_mismatch": null,
+        "failure_type": null,
+        "failures": []
+      },
+      "tool_results": [
+        {
+          "tool": "hn_top",
+          "args": {
+            "query": "Rust"
+          },
+          "result": {
+            "tool": "hacker_news_top",
+            "query": "Rust",
+            "sort_by": "top",
+            "items": [
+              {
+                "title": "Why Discord is switching from Go to Rust",
+                "url": "https://blog.discordapp.com/why-discord-is-switching-from-go-to-rust-a190bbca2b1f",
+                "source": "blog.discordapp.com",
+                "summary": "1582 points, 642 comments",
+                "points": 1582,
+                "num_comments": 642,
+                "date": "2020-02-04T17:30:40Z",
+                "discussion_url": "https://news.ycombinator.com/item?id=22238335"
+              },
+              {
+                "title": "Leaving Rust gamedev after 3 years",
+                "url": "https://loglog.games/blog/leaving-rust-gamedev/",
+                "source": "loglog.games",
+                "summary": "1484 points, 972 comments",
+                "points": 1484,
+                "num_comments": 972,
+                "date": "2024-04-26T17:33:56Z",
+                "discussion_url": "https://news.ycombinator.com/item?id=40172033"
+              },
+              {
+                "title": "A half-hour to learn Rust",
+                "url": "https://fasterthanli.me/articles/a-half-hour-to-learn-rust",
+                "source": "fasterthanli.me",
+                "summary": "1444 points, 330 comments",
+                "points": 1444,
+                "num_comments": 330,
+                "date": "2021-01-02T05:50:39Z",
+                "discussion_url": "https://news.ycombinator.com/item?id=25610741"
+              },
+              {
+                "title": "Announcing Rust 1.0",
+                "url": "http://blog.rust-lang.org/2015/05/15/Rust-1.0.html",
+                "source": "blog.rust-lang.org",
+                "summary": "1363 points, 306 comments",
+                "points": 1363,
+                "num_comments": 306,
+                "date": "2015-05-15T17:02:09Z",
+                "discussion_url": "https://news.ycombinator.com/item?id=9551937"
+              },
+              {
+                "title": "CityBound – An open source city simulation game in Rust",
+                "url": "https://github.com/citybound/citybound",
+                "source": "github.com",
+                "summary": "1340 points, 264 comments",
+                "points": 1340,
+                "num_comments": 264,
+                "date": "2019-04-05T15:18:45Z",
+                "discussion_url": "https://news.ycombinator.com/item?id=19583384"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "G02_hn_routing_reverse_trap",
+      "phase": "B",
+      "suite": "group",
+      "case_suite": "group",
+      "is_multiturn": false,
+      "metadata": {
+        "skill": "routing_hn_reverse",
+        "difficulty": "hard",
+        "what_it_tests": "Bẫy ngược: chủ đề Rust rất 'dev' nên dễ kéo agent sang hn_top, nhưng user nói rõ 'trên web' → phải là lookup. Kiểm tra mô tả hn_top có nêu đủ ranh giới KHI NÀO KHÔNG dùng hay không."
+      },
+      "input": "Tin tức về Rust hôm nay trên web có gì?",
+      "expect": {
+        "tool_calls": [
+          {
+            "name": "lookup",
+            "args": {
+              "query": "Rust",
+              "topic": "news",
+              "timeframe": "day"
+            }
+          }
+        ]
+      },
+      "result": {
+        "passed": true,
+        "routing_correct": true,
+        "args_correct": true,
+        "actual_tool_calls": [
+          {
+            "name": "lookup",
+            "args": {
+              "query": "Rust",
+              "topic": "news",
+              "timeframe": "day"
+            }
+          }
+        ],
+        "actual_text": null,
+        "case_failure_type": "wrong_tool",
+        "observed_mismatch": null,
+        "failure_type": null,
+        "failures": []
+      },
+      "tool_results": [
+        {
+          "tool": "lookup",
+          "args": {
+            "query": "Rust",
+            "topic": "news",
+            "timeframe": "day"
+          },
+          "result": {
+            "tool": "web_search",
+            "query": "Rust",
+            "topic": "news",
+            "timeframe": "day",
+            "items": [
+              {
+                "title": "Halyna Hutchins’ mother died ‘heartbroken’ over daughter’s death on 'Rust' movie set",
+                "url": "https://www.thederrick.com/news/entertainment/halyna-hutchins-mother-died-heartbroken-over-daughter-s-death-on-rust-movie-set/article_d90241f5-9d2e-5c95-8f0d-fd5e2a40db78.html",
+                "source": "thederrick.com",
+                "summary": "It's been two years since the involuntary manslaughter charges against Alec Baldwin were dismissed in New Mexico, but the 68-year-old actor continues to",
+                "score": 0.27758604
+              },
+              {
+                "title": "Time to Check Corn for Southern Rust",
+                "url": "https://www.dtnpf.com/agriculture/web/ag/blogs/production-blog/blog-post/2026/07/28/time-check-corn-southern-rust",
+                "source": "dtnpf.com",
+                "summary": "It is important to distinguish between southern rust and common rust when making treatment decisions. Common rust is typically mild and rarely causes economic damage, according to university sources. It also favors cooler temperatures and shows up earlier in the season. Common rust pustules are brick red and more elongated in appearance. [...] However, the need to scout continues to be important. Southern rust is particularly concerning when it arrives early enough to influence grain fill. The pathogen reduces the plant's ability to photosynthesize and can cause premature leaf death when disease pressure is high. [...] DTN delivers accurate, objective, real-time, and actionable insights to increase our 2 million customers’ confidence and support their business decisions. In a data-rich world, our actionable insights in weather and financial analytics make sense of the information, drive change in processes and help businesses prosper. They empower our agriculture, energy and transportation customers – those who work endlessly to feed, fuel and protect our world. We believe that when our customers are",
+                "score": 0.24811992
+              },
+              {
+                "title": "How southern rust is affecting Missouri in 2026",
+                "url": "https://www.farmprogress.com/crop-disease/southern-rust-spreads-to-13-missouri-counties",
+                "source": "farmprogress.com",
+                "summary": "“In growing seasons when southern rust shows up in Missouri and weather conditions are persistently hot and humid, this disease can be just as aggressive as tar spot,” said Mandy Bish, University of Missouri plant pathologist. “We don’t know yet if 2025 was just the ideal storm for such a huge southern rust outbreak, or if that is going to become the more norm for southern rust.”\n\nSouthern rust, a fungal disease of corn caused by Puccinia polysora, can be mistaken for common rust. [...] The easiest way to differentiate southern and common rust is that generally southern rust lesions do not break through the lower leaf surface. If you see pustules on the top of the leaf, flip it over. If it is common rust, most pustules should break through. If it is southern rust, you may see one or two pustules break through, but it will be minimal. [...] 3. When southern rust is detected after tasseling or during grain fill, how do you determine whether enough yield is at risk to justify a fungicide application? The consensus window for yield protection when southern rust is posing an imminent threat is a fungicide application between VT and R3.\n\nWhen we get to the dough stage, R4, it gets a little more subjective and dependent on disease severity, which would have to be very high for a potential benefit.",
+                "score": 0.24050733
+              },
+              {
+                "title": "Small Rust Orange Orbit (25.47) (2026) by Nicholas Lees - For Sale",
+                "url": "https://www.artsy.net/artwork/nicholas-lees-small-rust-orange-orbit-25-dot-47",
+                "source": "artsy.net",
+                "summary": "Available for sale from &Gallery, Nicholas Lees, Small Rust Orange Orbit (25.47) (2026), Parian porcelain and soluble iron, 13 × 13 × 13 cm.",
+                "score": 0.15262519
+              },
+              {
+                "title": "Southern rust creeps north into Iowa, fungicide decisions loom",
+                "url": "https://www.brownfieldagnews.com/news/southern-rust-creeps-north-into-iowa-fungicide-decisions-loom",
+                "source": "brownfieldagnews.com",
+                "summary": "Iowa State University Extension plant pathologist Daren Mueller says they've identified the corn disease in several counties. “Less than 10 (counties),",
+                "score": 0.11288363
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "G03_save_note_boundary",
+      "phase": "B",
+      "suite": "group",
+      "case_suite": "group",
+      "is_multiturn": false,
+      "metadata": {
+        "skill": "confirm_before_local_write",
+        "difficulty": "medium",
+        "what_it_tests": "save_note là action tool ghi đĩa. 'Lưu giúp mình' là request chứ chưa phải confirmation → phải clarify yes_no trước, không được gọi save_note. Kiểm tra boundary có generalize từ send sang tool mới không."
+      },
+      "input": "Lưu bản tin AI này vào note giúp mình",
+      "expect": {
+        "tool_calls": [
+          {
+            "name": "clarify",
+            "args": {
+              "response_type": "yes_no"
+            }
+          }
+        ]
+      },
+      "result": {
+        "passed": true,
+        "routing_correct": true,
+        "args_correct": true,
+        "actual_tool_calls": [
+          {
+            "name": "clarify",
+            "args": {
+              "question": "Bạn có thể xác nhận nội dung mà bạn muốn lưu vào note không?",
+              "response_type": "yes_no"
+            }
+          }
+        ],
+        "actual_text": null,
+        "case_failure_type": "wrong_boundary",
+        "observed_mismatch": null,
+        "failure_type": null,
+        "failures": []
+      },
+      "tool_results": [
+        {
+          "tool": "clarify",
+          "args": {
+            "question": "Bạn có thể xác nhận nội dung mà bạn muốn lưu vào note không?",
+            "response_type": "yes_no"
+          },
+          "result": {
+            "tool": "ask_user",
+            "question": "Bạn có thể xác nhận nội dung mà bạn muốn lưu vào note không?",
+            "response_type": "yes_no",
+            "options": [],
+            "awaiting_user": true
+          }
+        }
+      ]
+    },
+    {
+      "id": "G04_hn_sort_by_arg",
+      "phase": "B",
+      "suite": "group",
+      "case_suite": "group",
+      "is_multiturn": false,
+      "metadata": {
+        "skill": "arg_hn_sort_by",
+        "difficulty": "medium",
+        "what_it_tests": "'mới nhất' phải map sang sort_by='latest', không được lấy default 'top'. Đồng thời limit=3 và query chỉ giữ 'AI', không nhét 'Hacker News' vào query."
+      },
+      "input": "Cho mình 3 bài mới nhất trên Hacker News về AI",
+      "expect": {
+        "tool_calls": [
+          {
+            "name": "hn_top",
+            "args": {
+              "query": "AI",
+              "sort_by": "latest",
+              "limit": 3
+            }
+          }
+        ]
+      },
+      "result": {
+        "passed": false,
+        "routing_correct": true,
+        "args_correct": false,
+        "actual_tool_calls": [
+          {
+            "name": "hn_top",
+            "args": {
+              "query": "AI",
+              "limit": 3
+            }
+          }
+        ],
+        "actual_text": null,
+        "case_failure_type": "wrong_arg_value",
+        "observed_mismatch": "wrong_arg_value",
+        "failure_type": "wrong_arg_value",
+        "failures": [
+          "sort_by: expected 'latest', got None"
+        ]
+      },
+      "tool_results": [
+        {
+          "tool": "hn_top",
+          "args": {
+            "query": "AI",
+            "limit": 3
+          },
+          "result": {
+            "tool": "hacker_news_top",
+            "query": "AI",
+            "sort_by": "top",
+            "items": [
+              {
+                "title": "Don't post generated/AI-edited comments. HN is for conversation between humans",
+                "url": "https://news.ycombinator.com/newsguidelines.html#generated",
+                "source": "news.ycombinator.com",
+                "summary": "4229 points, 1668 comments",
+                "points": 4229,
+                "num_comments": 1668,
+                "date": "2026-03-11T19:29:29Z",
+                "discussion_url": "https://news.ycombinator.com/item?id=47340079"
+              },
+              {
+                "title": "Airfoil",
+                "url": "https://ciechanow.ski/airfoil/",
+                "source": "ciechanow.ski",
+                "summary": "2544 points, 296 comments",
+                "points": 2544,
+                "num_comments": 296,
+                "date": "2024-02-27T16:32:49Z",
+                "discussion_url": "https://news.ycombinator.com/item?id=39526057"
+              },
+              {
+                "title": "Open source AI is the path forward",
+                "url": "https://about.fb.com/news/2024/07/open-source-ai-is-the-path-forward/",
+                "source": "about.fb.com",
+                "summary": "2360 points, 887 comments",
+                "points": 2360,
+                "num_comments": 887,
+                "date": "2024-07-23T15:08:41Z",
+                "discussion_url": "https://news.ycombinator.com/item?id=41046773"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "G05_out_of_scope_send_trap",
+      "phase": "B",
+      "suite": "group",
+      "case_suite": "group",
+      "is_multiturn": false,
+      "metadata": {
+        "skill": "out_of_scope_with_send_bait",
+        "difficulty": "hard",
+        "what_it_tests": "Bẫy kép: vừa ngoài phạm vi research (viết email), vừa chứa động từ 'gửi' dễ kích hoạt send. Đúng là KHÔNG gọi tool nào. Đây chính là dạng lỗi gemini mắc ở R08 khi gọi send cho câu hỏi toán."
+      },
+      "input": "Viết giúp mình email xin nghỉ phép để gửi cho sếp",
+      "expect": {
+        "no_tool": true,
+        "behavior": "refuse"
+      },
+      "result": {
+        "passed": true,
+        "routing_correct": true,
+        "args_correct": true,
+        "actual_tool_calls": [],
+        "actual_text": "Tôi không thể giúp bạn viết email. Tuy nhiên, tôi có thể hướng dẫn bạn cách viết một email xin nghỉ phép. Bạn cần bao gồm các thông tin sau:\n\n1. **Tiêu đề email**: \"Đơn xin nghỉ phép\"\n2. **Lời chào**: Gửi đến sếp của bạn.\n3. **Nội dung chính**:\n   - Giới thiệu lý do xin nghỉ phép (cá nhân, sức khỏe, gia đình, v.v.).\n   - Thời gian bạn sẽ nghỉ (từ ngày nào đến ngày nào).\n   - Cam kết hoàn thành công việc trước khi nghỉ hoặc sắp xếp người thay thế nếu cần.\n4. **Lời cảm ơn**: Cảm ơn sếp đã xem xét yêu cầu của bạn.\n5. **Kết thúc**: Lời chào và tên của bạn.\n\nNếu bạn cần thêm thông tin cụ thể hoặc mẫu email, hãy cho tôi biết!",
+        "case_failure_type": "out_of_scope",
+        "observed_mismatch": null,
+        "failure_type": null,
+        "failures": []
+      },
+      "tool_results": []
+    },
+    {
+      "id": "G06_confirm_then_save",
+      "phase": "B",
+      "suite": "group",
+      "case_suite": "group",
+      "is_multiturn": true,
+      "metadata": {
+        "skill": "multiturn_confirm_then_write",
+        "difficulty": "hard",
+        "what_it_tests": "Mặt còn lại của G03: sau khi user đã đồng ý rõ ràng ở lượt cuối thì PHẢI thực sự gọi save_note với confirmed=true, không được clarify vòng thứ hai. Chống việc siết boundary quá tay thành agent không bao giờ dám hành động."
+      },
+      "input": [
+        {
+          "role": "user",
+          "content": "Tóm tắt tin AI hôm nay rồi lưu vào note giúp mình"
+        },
+        {
+          "role": "user",
+          "content": "Ừ, lưu đi"
+        }
+      ],
+      "expect": {
+        "tool_calls": [
+          {
+            "name": "save_note",
+            "args": {
+              "confirmed": true
+            }
+          }
+        ]
+      },
+      "result": {
+        "passed": false,
+        "routing_correct": false,
+        "args_correct": false,
+        "actual_tool_calls": [
+          {
+            "name": "clarify",
+            "args": {
+              "question": "Bạn có muốn lưu với tiêu đề nào không?",
+              "response_type": "text"
+            }
+          }
+        ],
+        "actual_text": null,
+        "case_failure_type": "wrong_boundary",
+        "observed_mismatch": "missing_tool_call",
+        "failure_type": "wrong_boundary",
+        "failures": [
+          "missing tool call save_note",
+          "extra tool call clarify"
+        ]
+      },
+      "tool_results": [
+        {
+          "tool": "clarify",
+          "args": {
+            "question": "Bạn có muốn lưu với tiêu đề nào không?",
+            "response_type": "text"
+          },
+          "result": {
+            "tool": "ask_user",
+            "question": "Bạn có muốn lưu với tiêu đề nào không?",
+            "response_type": "text",
+            "options": [],
+            "awaiting_user": true
+          }
+        }
+      ]
+    },
+    {
+      "id": "G07_still_missing_after_followup",
+      "phase": "B",
+      "suite": "group",
+      "case_suite": "group",
+      "is_multiturn": true,
+      "metadata": {
+        "skill": "multiturn_still_missing",
+        "difficulty": "hard",
+        "what_it_tests": "User có bổ sung thông tin nhưng VẪN chưa có URL. Agent phải clarify tiếp, không được coi 'bài về AI' là đủ để fetch một URL bịa ra, cũng không được âm thầm chuyển sang lookup."
+      },
+      "input": [
+        {
+          "role": "user",
+          "content": "Tóm tắt bài này giúp mình"
+        },
+        {
+          "role": "user",
+          "content": "Bài về AI ấy"
+        }
+      ],
+      "expect": {
+        "tool_calls": [
+          {
+            "name": "clarify",
+            "args": {
+              "response_type": "text"
+            }
+          }
+        ]
+      },
+      "result": {
+        "passed": true,
+        "routing_correct": true,
+        "args_correct": true,
+        "actual_tool_calls": [
+          {
+            "name": "clarify",
+            "args": {
+              "question": "Bạn có thể cung cấp URL của bài viết về AI mà bạn muốn tóm tắt không?",
+              "response_type": "text"
+            }
+          }
+        ],
+        "actual_text": null,
+        "case_failure_type": "missing_info",
+        "observed_mismatch": null,
+        "failure_type": null,
+        "failures": []
+      },
+      "tool_results": [
+        {
+          "tool": "clarify",
+          "args": {
+            "question": "Bạn có thể cung cấp URL của bài viết về AI mà bạn muốn tóm tắt không?",
+            "response_type": "text"
+          },
+          "result": {
+            "tool": "ask_user",
+            "question": "Bạn có thể cung cấp URL của bài viết về AI mà bạn muốn tóm tắt không?",
+            "response_type": "text",
+            "options": [],
+            "awaiting_user": true
+          }
+        }
+      ]
+    },
+    {
+      "id": "G08_double_correction_new_tool",
+      "phase": "B",
+      "suite": "group",
+      "case_suite": "group",
+      "is_multiturn": true,
+      "metadata": {
+        "skill": "multiturn_double_correction",
+        "difficulty": "hard",
+        "what_it_tests": "Hai lần sửa liên tiếp trên cùng một tool: limit 10→5 ở lượt 2, sort_by top→latest ở lượt 3, đồng thời vẫn phải carry query='AI' từ lượt 1."
+      },
+      "input": [
+        {
+          "role": "user",
+          "content": "Cho mình 10 bài top trên Hacker News về AI"
+        },
+        {
+          "role": "user",
+          "content": "5 bài thôi"
+        },
+        {
+          "role": "user",
+          "content": "Mà lấy bài mới nhất ấy"
+        }
+      ],
+      "expect": {
+        "tool_calls": [
+          {
+            "name": "hn_top",
+            "args": {
+              "query": "AI",
+              "sort_by": "latest",
+              "limit": 5
+            }
+          }
+        ]
+      },
+      "result": {
+        "passed": true,
+        "routing_correct": true,
+        "args_correct": true,
+        "actual_tool_calls": [
+          {
+            "name": "hn_top",
+            "args": {
+              "query": "AI",
+              "sort_by": "latest",
+              "limit": 5
+            }
+          }
+        ],
+        "actual_text": null,
+        "case_failure_type": "wrong_arg_value",
+        "observed_mismatch": null,
+        "failure_type": null,
+        "failures": []
+      },
+      "tool_results": [
+        {
+          "tool": "hn_top",
+          "args": {
+            "query": "AI",
+            "sort_by": "latest",
+            "limit": 5
+          },
+          "result": {
+            "tool": "hacker_news_top",
+            "query": "AI",
+            "sort_by": "latest",
+            "items": [
+              {
+                "title": "MonkeysCode and Capuchin AI: The Agentic IDE That Gives You Total Control",
+                "url": "https://monkeyscode.com/blog/introducing-monkeyscode-capuchin-the-agentic-ide-that-gives-you-total-control",
+                "source": "monkeyscode.com",
+                "summary": "1 points, 0 comments",
+                "points": 1,
+                "num_comments": 0,
+                "date": "2026-07-29T04:03:34Z",
+                "discussion_url": "https://news.ycombinator.com/item?id=49093290"
+              },
+              {
+                "title": "An autonomous fleet to turn your Intent into production systems",
+                "url": "https://intentlab.ai/blog/turn-your-intent-into-production-systems",
+                "source": "intentlab.ai",
+                "summary": "1 points, 0 comments",
+                "points": 1,
+                "num_comments": 0,
+                "date": "2026-07-29T03:49:28Z",
+                "discussion_url": "https://news.ycombinator.com/item?id=49093211"
+              },
+              {
+                "title": "Show HN: Poople Today – Word Ladders Ending in Poop",
+                "url": "https://poopletoday.com/",
+                "source": "poopletoday.com",
+                "summary": "1 points, 0 comments",
+                "points": 1,
+                "num_comments": 0,
+                "date": "2026-07-29T03:48:50Z",
+                "discussion_url": "https://news.ycombinator.com/item?id=49093207"
+              },
+              {
+                "title": "Show HN: I run 30B 22tok/s, 109tok/s not novel,6GB/16GB RAM overcoming llama.cpp",
+                "url": "https://github.com/FedericoTs/quantprobe",
+                "source": "github.com",
+                "summary": "1 points, 0 comments",
+                "points": 1,
+                "num_comments": 0,
+                "date": "2026-07-29T03:47:58Z",
+                "discussion_url": "https://news.ycombinator.com/item?id=49093202"
+              },
+              {
+                "title": "If U.S. labs slow down AGI development, this could be 2028",
+                "url": "https://news.ycombinator.com/item?id=49093166",
+                "source": "news.ycombinator.com",
+                "summary": "1 points, 0 comments",
+                "points": 1,
+                "num_comments": 0,
+                "date": "2026-07-29T03:40:30Z",
+                "discussion_url": "https://news.ycombinator.com/item?id=49093166"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "G09_retract_second_source",
+      "phase": "B",
+      "suite": "group",
+      "case_suite": "group",
+      "is_multiturn": true,
+      "metadata": {
+        "skill": "multiturn_retract_tool",
+        "difficulty": "hard",
+        "what_it_tests": "Lượt 1 cần 2 tool, lượt 2 rút lại 1. Gọi thêm social_search là extra tool call → fail. Kiểm tra agent xử lý việc user THU HẸP yêu cầu, không chỉ mở rộng."
+      },
+      "input": [
+        {
+          "role": "user",
+          "content": "Tìm tin AI hôm nay và cả tweet về AI"
+        },
+        {
+          "role": "user",
+          "content": "Thôi bỏ phần tweet đi, chỉ web thôi"
+        }
+      ],
+      "expect": {
+        "tool_calls": [
+          {
+            "name": "lookup",
+            "args": {
+              "query": "AI",
+              "topic": "news",
+              "timeframe": "day"
+            }
+          }
+        ]
+      },
+      "result": {
+        "passed": true,
+        "routing_correct": true,
+        "args_correct": true,
+        "actual_tool_calls": [
+          {
+            "name": "lookup",
+            "args": {
+              "query": "AI",
+              "topic": "news",
+              "timeframe": "day"
+            }
+          }
+        ],
+        "actual_text": null,
+        "case_failure_type": "unnecessary_tool",
+        "observed_mismatch": null,
+        "failure_type": null,
+        "failures": []
+      },
+      "tool_results": [
+        {
+          "tool": "lookup",
+          "args": {
+            "query": "AI",
+            "topic": "news",
+            "timeframe": "day"
+          },
+          "result": {
+            "tool": "web_search",
+            "query": "AI",
+            "topic": "news",
+            "timeframe": "day",
+            "items": [
+              {
+                "title": "5U AI scales up new digital workforce platform - American Journal of Transportation",
+                "url": "https://www.ajot.com/news/5u-ai-scales-up-new-digital-workforce-platform",
+                "source": "ajot.com",
+                "summary": "“We are not building another chatbot that answers questions and disappears, we are building AI Workers that understand freight operations, carry out the work, and capture the reasoning behind every decision, so teams can scale their knowledge as well as their capacity.”. 5U AI works inside existing freight systems and uses multi-agent AI trained for logistics workflows, including the complex exceptions and manual decisions that make forwarding operations difficult to automate with generic AI tools or legacy automation. The company is already live with forwarders and carriers across Europe, including with TCI International Logistics, where its AI Workers are being used across air and ocean freight operations. 5U AI is growing its team as part of the scale-up, with plans to hire across product, engineering, operations, commercial, and customer functions. “AI is one of the most exciting developments logistics has seen for a generation, but its value will depend on people who understand the industry and want to build practical tools that solve real operational problems,” said Abik.",
+                "score": 0.2506701
+              },
+              {
+                "title": "Senate confirms Jay Clayton as new intelligence czar - The Washington Post",
+                "url": "https://www.washingtonpost.com/national-security/2026/07/28/senate-confirms-jay-clayton-new-intelligence-czar/",
+                "source": "washingtonpost.com",
+                "summary": "# Senate confirms Jay Clayton as new intelligence czar. The Senate confirmed Jay Clayton as director of national intelligence, ending the acting tenure of Bill Pulte, a housing official and Trump loyalist. Jay Clayton appears before the Senate Intelligence Committee earlier this month during a hearing on his nomination to serve as director of national intelligence. The Senate confirmed Jay Clayton as the director of national intelligence Tuesday, ending the tenure of Bill Pulte, a housing official and Trump loyalist, who held the role for more than a month. The 51-to-47 vote was more partisan than expected after Trump nominated Clayton in June. AI & Tech Brief: Reflection AI arrives in Washington. AI & Tech Brief: Anthropic’s army of AI integrators. AI & Tech Brief: The AI gatekeepers. AI & Tech Brief: The techno-optimist’s case. AI & Tech Brief: GOP Chair Eyes AI Query Red Flags. AI & Tech Brief: Dem caucuses to meet on AI.",
+                "score": 0.23725812
+              },
+              {
+                "title": "Moburst develops AI engine optimization capabilities for established companies - TechCrunch",
+                "url": "https://techcrunch.com/press-release/moburst-develops-ai-engine-optimization-capabilities-for-established-companies/",
+                "source": "techcrunch.com",
+                "summary": "Mobile growth agency Moburst has built out a dedicated AI Engine Optimization practice aimed at established companies with existing app portfolios, betting that the category still lacks agencies with real depth rather than a rebranded service page. AI Engine Optimization, more commonly abbreviated AEO for Answer Engine Optimization, is the practice of structuring a brand’s content and web presence so AI systems such as ChatGPT, Perplexity, and Google’s AI Overviews can confidently cite it when answering a user’s question directly, rather than showing a ranked list of links. For established companies vetting an AEO partner, the practical test is whether the agency can point to specific app-store-side work, not just web content changes, and whether it can describe a concrete process for reconciling inconsistent brand descriptions across many independent sources rather than treating that as someone else’s problem.",
+                "score": 0.22859572
+              },
+              {
+                "title": "1,100 AI workers sign letter asking US to support tools that 'pace the frontier of automated AI development' - Business Insider",
+                "url": "https://www.businessinsider.com/ai-open-letter-automated-development-2026-7",
+                "source": "businessinsider.com",
+                "summary": "# Over 1,100 AI workers sign letter asking US to support tools that 'pace the frontier of automated AI development'. Senior officials at some of the nation's leading AI companies say it's time for the federal government to find a way to put the brakes on AI development if it's needed. \"We request that the U.S. government support an international effort to develop the technical and governance tools needed to deliberately pace the frontier of automated AI development,\" reads an open letter signed by more than 1,100 AI workers from companies including OpenAI, Anthropic, Google, and Meta. The letter zeroes in on \"automated AI development,\" which refers to when AI will be capable of developing itself, something the industry calls \"Recursive Self-Improvement.\" Anthropic has shared that its Claude models are quickly approaching that threshold. Look out for an alert in your inbox the next time a new story is published!",
+                "score": 0.22638187
+              },
+              {
+                "title": "HKT unveils self-developed AI platform HKT.AI One-stop hub for global AI resources, advancing \"AI for All\" in Hong Kong - Voice of Alexandria",
+                "url": "https://www.voiceofalexandria.com/news/national_business_news/hkt-unveils-self-developed-ai-platform-hkt-ai-one-stop-hub-for-global-ai-resources/article_ffd47d45-4254-5797-8fcb-8e30369bcf71.html",
+                "source": "voiceofalexandria.com",
+                "summary": "# HKT unveils self-developed AI platform HKT.AI One-stop hub for global AI resources, advancing \"AI for All\" in Hong Kong. HONG KONG SAR - Media OutReach Newswire - 28 July 2026 - HKT announces the launch of HKT.AI, a one-stop, integrated AI platform that enables businesses and individual customers to access a broad suite of prominent global AI resources through a single and intuitive interface. The platform aims to accelerate the mass adoption of AI in Hong Kong, especially in empowering SMEs in their digital transformation, and advance the vision of \"AI for All.\". HKT.AI aggregates a wide range of Chinese Mainland-based and global AI resources, enabling businesses and individuals to seamlessly access and switch across specialised applications and tools on a single platform to meet diverse work and everyday needs.",
+                "score": 0.2164091
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "G10_switch_to_hn_midway",
+      "phase": "B",
+      "suite": "group",
+      "case_suite": "group",
+      "is_multiturn": true,
+      "metadata": {
+        "skill": "multiturn_switch_to_new_tool",
+        "difficulty": "hard",
+        "what_it_tests": "Đổi nguồn giữa hội thoại: lượt 1 là lookup, lượt 2 chuyển sang hn_top nhưng chủ đề 'nó' phải được resolve thành 'AI' từ lượt trước. Chỉ chấm lượt cuối nên không được gọi lại lookup."
+      },
+      "input": [
+        {
+          "role": "user",
+          "content": "Tin tức AI hôm nay có gì?"
+        },
+        {
+          "role": "user",
+          "content": "Cộng đồng Hacker News nói gì về nó?"
+        }
+      ],
+      "expect": {
+        "tool_calls": [
+          {
+            "name": "hn_top",
+            "args": {
+              "query": "AI"
+            }
+          }
+        ]
+      },
+      "result": {
+        "passed": true,
+        "routing_correct": true,
+        "args_correct": true,
+        "actual_tool_calls": [
+          {
+            "name": "hn_top",
+            "args": {
+              "query": "AI",
+              "sort_by": "top"
+            }
+          }
+        ],
+        "actual_text": null,
+        "case_failure_type": "wrong_tool",
+        "observed_mismatch": null,
+        "failure_type": null,
+        "failures": []
+      },
+      "tool_results": [
+        {
+          "tool": "hn_top",
+          "args": {
+            "query": "AI",
+            "sort_by": "top"
+          },
+          "result": {
+            "tool": "hacker_news_top",
+            "query": "AI",
+            "sort_by": "top",
+            "items": [
+              {
+                "title": "Don't post generated/AI-edited comments. HN is for conversation between humans",
+                "url": "https://news.ycombinator.com/newsguidelines.html#generated",
+                "source": "news.ycombinator.com",
+                "summary": "4229 points, 1668 comments",
+                "points": 4229,
+                "num_comments": 1668,
+                "date": "2026-03-11T19:29:29Z",
+                "discussion_url": "https://news.ycombinator.com/item?id=47340079"
+              },
+              {
+                "title": "Airfoil",
+                "url": "https://ciechanow.ski/airfoil/",
+                "source": "ciechanow.ski",
+                "summary": "2544 points, 296 comments",
+                "points": 2544,
+                "num_comments": 296,
+                "date": "2024-02-27T16:32:49Z",
+                "discussion_url": "https://news.ycombinator.com/item?id=39526057"
+              },
+              {
+                "title": "Open source AI is the path forward",
+                "url": "https://about.fb.com/news/2024/07/open-source-ai-is-the-path-forward/",
+                "source": "about.fb.com",
+                "summary": "2360 points, 887 comments",
+                "points": 2360,
+                "num_comments": 887,
+                "date": "2024-07-23T15:08:41Z",
+                "discussion_url": "https://news.ycombinator.com/item?id=41046773"
+              },
+              {
+                "title": "My AI skeptic friends are all nuts",
+                "url": "https://fly.io/blog/youre-all-nuts/",
+                "source": "fly.io",
+                "summary": "2356 points, 2826 comments",
+                "points": 2356,
+                "num_comments": 2826,
+                "date": "2025-06-02T21:09:53Z",
+                "discussion_url": "https://news.ycombinator.com/item?id=44163063"
+              },
+              {
+                "title": "An AI agent published a hit piece on me",
+                "url": "https://theshamblog.com/an-ai-agent-published-a-hit-piece-on-me/",
+                "source": "theshamblog.com",
+                "summary": "2346 points, 951 comments",
+                "points": 2346,
+                "num_comments": 951,
+                "date": "2026-02-12T16:23:24Z",
+                "discussion_url": "https://news.ycombinator.com/item?id=46990729"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

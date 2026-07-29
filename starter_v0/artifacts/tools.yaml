@@ -103,8 +103,7 @@ tools:
         sort_by:
           type: string
           enum: [top, latest]
-          default: "top"
-          description: "'top' xếp theo độ phổ biến (mặc định). 'latest' xếp theo mới nhất — dùng khi user nói 'mới nhất'."
+          description: "BẮT BUỘC điền, không có giá trị mặc định. Đặt 'latest' khi user nói 'mới nhất' / 'gần đây' / 'mới ra'. Đặt 'top' khi user nói 'top' / 'phổ biến' / 'nổi bật', hoặc khi user không nêu thứ tự nào."
         limit:
           type: integer
           default: 5
@@ -142,7 +141,7 @@ tools:
         title:
           type: string
           default: ""
-          description: "Tiêu đề ngắn, sẽ được slug hóa thành tên file."
+          description: "Tiêu đề ngắn, sẽ được slug hóa thành tên file. TỰ ĐẶT tiêu đề từ nội dung digest (ví dụ 'Tin AI 29-07'); KHÔNG hỏi user tiêu đề. Chỉ clarify khi chưa có nội dung để lưu, chứ không phải khi thiếu tiêu đề."
         content:
           type: string
           default: ""
