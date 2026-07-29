@@ -90,6 +90,69 @@ tools:
         headline: {type: string, default: "", description: "Tiêu đề"}
       required: [items, template]
 
+  # ---------------- Team-authored tools (G32) ----------------
+  - name: hn_top
+    description: "Tìm bài trên Hacker News (cộng đồng lập trình viên), kèm số điểm và số bình luận. CHỈ dùng khi user nhắc rõ Hacker News / HN, hoặc hỏi cộng đồng dev/lập trình viên đang bàn gì. Tin tức web nói chung phải dùng lookup với topic='news'; bài trên X/Twitter phải dùng social_search."
+    parameters:
+      type: object
+      properties:
+        query:
+          type: string
+          default: ""
+          description: "Chỉ từ khóa chủ đề, ví dụ 'AI', 'rust'. Để chuỗi rỗng nếu user muốn xem trang chủ HN hiện tại."
+        sort_by:
+          type: string
+          enum: [top, latest]
+          default: "top"
+          description: "'top' xếp theo độ phổ biến (mặc định). 'latest' xếp theo mới nhất — dùng khi user nói 'mới nhất'."
+        limit:
+          type: integer
+          default: 5
+          description: "Số bài trả về, từ 1 đến 20."
+      required: [query]
+
+  - name: dedupe
+    description: "Lọc bỏ item trùng lặp trong danh sách kết quả agent ĐÃ có từ các tool trước. Tool thuần cục bộ, không tìm kiếm gì thêm. Chỉ dùng khi đã gộp kết quả từ HAI nguồn trở lên và có khả năng trùng bài. Nếu chỉ có một nguồn thì không được gọi — đó là tool call thừa."
+    parameters:
+      type: object
+      properties:
+        items:
+          type: array
+          default: []
+          description: "Danh sách item lấy từ kết quả tool trước đó."
+          items:
+            type: object
+            properties:
+              title: {type: string}
+              url: {type: string}
+              source: {type: string}
+              summary: {type: string}
+        key:
+          type: string
+          enum: [url, title, both]
+          default: "url"
+          description: "'url' so khớp theo URL đã chuẩn hóa (mặc định). 'title' so theo tiêu đề. 'both' coi là trùng nếu khớp một trong hai."
+      required: [items]
+
+  - name: save_note
+    description: "Lưu một digest đã soạn xong ra file markdown cục bộ trong notes/. Đây là action tool có side effect ghi đĩa: chỉ đặt confirmed=true SAU KHI user đã trả lời đồng ý rõ ràng. Nếu user mới yêu cầu lưu mà chưa xác nhận, phải gọi clarify với response_type='yes_no' trước."
+    parameters:
+      type: object
+      properties:
+        title:
+          type: string
+          default: ""
+          description: "Tiêu đề ngắn, sẽ được slug hóa thành tên file."
+        content:
+          type: string
+          default: ""
+          description: "Nội dung markdown của note. Không được rỗng."
+        confirmed:
+          type: boolean
+          default: false
+          description: "Chỉ đặt true sau khi user xác nhận đồng ý lưu."
+      required: [title, content]
+
   # ---------------- Bonus tools ----------------
   - name: send
     description: "Gửi một đoạn văn bản đi. Đây là action tool nhạy cảm: chỉ dùng sau khi user đã xác nhận rõ muốn gửi ngay bây giờ. Nếu user mới yêu cầu đăng/gửi/chia sẻ mà chưa xác nhận, phải dùng clarify với response_type='yes_no' trước."
