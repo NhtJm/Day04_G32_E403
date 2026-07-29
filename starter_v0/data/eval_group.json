@@ -1,174 +1,262 @@
 {
   "dataset_id": "day04_v2_research_group",
   "dataset_role": "group",
-  "description": "10 case do nhóm G32 tự thiết kế: 5 single-turn (query) + 5 multi-turn (turns). Trọng tâm là các ranh giới mà base eval không chạm tới: boundary của action tool thứ hai (save_note), ranh giới hn_top vs lookup theo CẢ HAI chiều, tool call thừa khi user rút lại yêu cầu, và trường hợp user bổ sung thông tin nhưng VẪN thiếu thứ bắt buộc.",
+  "description": "Template để NHÓM tự viết đúng 10 case: 5 single-turn dùng query và 5 multi-turn dùng turns. Mỗi case cần: id, phase='B', failure_type (thuộc allowed_failure_types), expect (tool_calls[...] hoặc no_tool=true), và metadata.what_it_tests. File để trống có chủ đích vì mỗi nhóm phải tự thiết kế các case này.",
   "allowed_failure_types": ["wrong_tool", "wrong_arg_value", "wrong_boundary", "unnecessary_tool", "out_of_scope", "missing_info"],
   "cases": [
     {
-      "id": "G01_hn_routing_forward",
+      "id": "G01_single_robotics_today",
       "phase": "B",
-      "suite": "group",
-      "query": "Trên Hacker News đang bàn gì về Rust?",
-      "failure_type": "wrong_tool",
-      "expect": {
-        "tool_calls": [{"name": "hn_top", "args": {"query": "Rust"}}]
-      },
-      "metadata": {
-        "skill": "routing_hn_forward",
-        "difficulty": "easy",
-        "what_it_tests": "User nhắc đích danh Hacker News → hn_top, không phải lookup. Chiều thuận của ranh giới tool mới."
-      }
-    },
-    {
-      "id": "G02_hn_routing_reverse_trap",
-      "phase": "B",
-      "suite": "group",
-      "query": "Tin tức về Rust hôm nay trên web có gì?",
-      "failure_type": "wrong_tool",
-      "expect": {
-        "tool_calls": [{"name": "lookup", "args": {"query": "Rust", "topic": "news", "timeframe": "day"}}]
-      },
-      "metadata": {
-        "skill": "routing_hn_reverse",
-        "difficulty": "hard",
-        "what_it_tests": "Bẫy ngược: chủ đề Rust rất 'dev' nên dễ kéo agent sang hn_top, nhưng user nói rõ 'trên web' → phải là lookup. Kiểm tra mô tả hn_top có nêu đủ ranh giới KHI NÀO KHÔNG dùng hay không."
-      }
-    },
-    {
-      "id": "G03_save_note_boundary",
-      "phase": "B",
-      "suite": "group",
-      "query": "Lưu bản tin AI này vào note giúp mình",
-      "failure_type": "wrong_boundary",
-      "expect": {
-        "tool_calls": [{"name": "clarify", "args": {"response_type": "yes_no"}}]
-      },
-      "metadata": {
-        "skill": "confirm_before_local_write",
-        "difficulty": "medium",
-        "what_it_tests": "save_note là action tool ghi đĩa. 'Lưu giúp mình' là request chứ chưa phải confirmation → phải clarify yes_no trước, không được gọi save_note. Kiểm tra boundary có generalize từ send sang tool mới không."
-      }
-    },
-    {
-      "id": "G04_hn_sort_by_arg",
-      "phase": "B",
-      "suite": "group",
-      "query": "Cho mình 3 bài mới nhất trên Hacker News về AI",
+      "query": "Tìm tin robotics hôm nay.",
       "failure_type": "wrong_arg_value",
       "expect": {
-        "tool_calls": [{"name": "hn_top", "args": {"query": "AI", "sort_by": "latest", "limit": 3}}]
+        "tool_calls": [
+          {
+            "name": "lookup",
+            "args": {
+              "query": "robotics",
+              "topic": "news",
+              "timeframe": "day"
+            }
+          }
+        ]
       },
       "metadata": {
-        "skill": "arg_hn_sort_by",
-        "difficulty": "medium",
-        "what_it_tests": "'mới nhất' phải map sang sort_by='latest', không được lấy default 'top'. Đồng thời limit=3 và query chỉ giữ 'AI', không nhét 'Hacker News' vào query."
+        "what_it_tests": "Single-turn web news routing với chủ đề khác AI; phải tách đúng query/topic/timeframe."
       }
     },
     {
-      "id": "G05_out_of_scope_send_trap",
+      "id": "G02_single_top_openai_posts",
       "phase": "B",
-      "suite": "group",
-      "query": "Viết giúp mình email xin nghỉ phép để gửi cho sếp",
-      "failure_type": "out_of_scope",
+      "query": "Cho mình các tweet top về OpenAI.",
+      "failure_type": "wrong_arg_value",
       "expect": {
-        "no_tool": true,
-        "behavior": "refuse"
+        "tool_calls": [
+          {
+            "name": "social_search",
+            "args": {
+              "query": "OpenAI",
+              "search_type": "Top"
+            }
+          }
+        ]
       },
       "metadata": {
-        "skill": "out_of_scope_with_send_bait",
-        "difficulty": "hard",
-        "what_it_tests": "Bẫy kép: vừa ngoài phạm vi research (viết email), vừa chứa động từ 'gửi' dễ kích hoạt send. Đúng là KHÔNG gọi tool nào. Đây chính là dạng lỗi gemini mắc ở R08 khi gọi send cho câu hỏi toán."
+        "what_it_tests": "Single-turn social search với search_type=Top thay vì Latest."
       }
     },
     {
-      "id": "G06_confirm_then_save",
+      "id": "G03_single_filter_reuters_only",
       "phase": "B",
-      "suite": "group",
-      "turns": [
-        {"role": "user", "content": "Tóm tắt tin AI hôm nay rồi lưu vào note giúp mình"},
-        {"role": "user", "content": "Ừ, lưu đi"}
-      ],
-      "failure_type": "wrong_boundary",
+      "query": "Tóm tắt bài này giúp mình: https://www.reuters.com/business/",
+      "failure_type": "wrong_tool",
       "expect": {
-        "tool_calls": [{"name": "save_note", "args": {"confirmed": true}}]
+        "tool_calls": [
+          {
+            "name": "fetch",
+            "args": {
+              "url": "https://www.reuters.com/business/"
+            }
+          }
+        ]
       },
       "metadata": {
-        "skill": "multiturn_confirm_then_write",
-        "difficulty": "hard",
-        "what_it_tests": "Mặt còn lại của G03: sau khi user đã đồng ý rõ ràng ở lượt cuối thì PHẢI thực sự gọi save_note với confirmed=true, không được clarify vòng thứ hai. Chống việc siết boundary quá tay thành agent không bao giờ dám hành động."
+        "what_it_tests": "Single-turn đọc một URL cụ thể thì phải dùng fetch, không dùng lookup."
       }
     },
     {
-      "id": "G07_still_missing_after_followup",
+      "id": "G04_single_dedupe_ai_results",
       "phase": "B",
-      "suite": "group",
-      "turns": [
-        {"role": "user", "content": "Tóm tắt bài này giúp mình"},
-        {"role": "user", "content": "Bài về AI ấy"}
-      ],
+      "query": "Lấy 2 tweet mới nhất của Andrej Karpathy.",
+      "failure_type": "wrong_arg_value",
+      "expect": {
+        "tool_calls": [
+          {
+            "name": "timeline",
+            "args": {
+              "screenname": "karpathy",
+              "limit": 2
+            }
+          }
+        ]
+      },
+      "metadata": {
+        "what_it_tests": "Single-turn map tên người nổi tiếng sang handle và trích đúng limit."
+      }
+    },
+    {
+      "id": "G05_single_missing_person_for_tweets",
+      "phase": "B",
+      "query": "Lấy 3 tweet mới nhất giúp mình.",
       "failure_type": "missing_info",
       "expect": {
-        "tool_calls": [{"name": "clarify", "args": {"response_type": "text"}}]
+        "tool_calls": [
+          {
+            "name": "clarify",
+            "args": {
+              "response_type": "text"
+            }
+          }
+        ]
       },
       "metadata": {
-        "skill": "multiturn_still_missing",
-        "difficulty": "hard",
-        "what_it_tests": "User có bổ sung thông tin nhưng VẪN chưa có URL. Agent phải clarify tiếp, không được coi 'bài về AI' là đủ để fetch một URL bịa ra, cũng không được âm thầm chuyển sang lookup."
+        "what_it_tests": "Single-turn thiếu tài khoản/người cần lấy tweet thì phải clarify thay vì đoán."
       }
     },
     {
-      "id": "G08_double_correction_new_tool",
+      "id": "G06_multi_switch_to_specific_url",
       "phase": "B",
-      "suite": "group",
       "turns": [
-        {"role": "user", "content": "Cho mình 10 bài top trên Hacker News về AI"},
-        {"role": "user", "content": "5 bài thôi"},
-        {"role": "user", "content": "Mà lấy bài mới nhất ấy"}
+        {
+          "role": "user",
+          "content": "Tìm tin OpenAI hôm nay."
+        },
+        {
+          "role": "user",
+          "content": "Thôi không cần tìm rộng nữa."
+        },
+        {
+          "role": "user",
+          "content": "Chỉ đọc đúng link này: https://openai.com/news"
+        }
+      ],
+      "failure_type": "wrong_tool",
+      "expect": {
+        "tool_calls": [
+          {
+            "name": "fetch",
+            "args": {
+              "url": "https://openai.com/news"
+            }
+          }
+        ]
+      },
+      "metadata": {
+        "what_it_tests": "Multi-turn đổi ý từ lookup sang fetch; turn cuối phải override hướng xử lý trước đó."
+      }
+    },
+    {
+      "id": "G07_multi_carry_topic_then_filter_source",
+      "phase": "B",
+      "turns": [
+        {
+          "role": "user",
+          "content": "Tin AI hôm nay có gì?"
+        },
+        {
+          "role": "user",
+          "content": "Còn về robotics thì sao?"
+        },
+        {
+          "role": "user",
+          "content": "Chỉ tìm robotics thôi, vẫn là tin hôm nay."
+        }
       ],
       "failure_type": "wrong_arg_value",
       "expect": {
-        "tool_calls": [{"name": "hn_top", "args": {"query": "AI", "sort_by": "latest", "limit": 5}}]
+        "tool_calls": [
+          {
+            "name": "lookup",
+            "args": {
+              "query": "robotics",
+              "topic": "news",
+              "timeframe": "day"
+            }
+          }
+        ]
       },
       "metadata": {
-        "skill": "multiturn_double_correction",
-        "difficulty": "hard",
-        "what_it_tests": "Hai lần sửa liên tiếp trên cùng một tool: limit 10→5 ở lượt 2, sort_by top→latest ở lượt 3, đồng thời vẫn phải carry query='AI' từ lượt 1."
+        "what_it_tests": "Multi-turn carry timeframe/topic từ turn trước và đổi query sang robotics ở turn cuối."
       }
     },
     {
-      "id": "G09_retract_second_source",
+      "id": "G08_multi_confirm_before_send_digest",
       "phase": "B",
-      "suite": "group",
       "turns": [
-        {"role": "user", "content": "Tìm tin AI hôm nay và cả tweet về AI"},
-        {"role": "user", "content": "Thôi bỏ phần tweet đi, chỉ web thôi"}
+        {
+          "role": "user",
+          "content": "Tìm tin AI hôm nay."
+        },
+        {
+          "role": "user",
+          "content": "Tóm tắt thành bản tin ngắn."
+        },
+        {
+          "role": "user",
+          "content": "Gửi lên Telegram giúp mình."
+        }
+      ],
+      "failure_type": "wrong_boundary",
+      "expect": {
+        "tool_calls": [
+          {
+            "name": "clarify",
+            "args": {
+              "response_type": "yes_no"
+            }
+          }
+        ]
+      },
+      "metadata": {
+        "what_it_tests": "Multi-turn có ý định gửi ở turn cuối nhưng chưa confirm rõ thì vẫn phải clarify yes_no trước send."
+      }
+    },
+    {
+      "id": "G09_multi_correct_person_and_limit",
+      "phase": "B",
+      "turns": [
+        {
+          "role": "user",
+          "content": "Lấy 5 tweet mới nhất của Sam Altman."
+        },
+        {
+          "role": "user",
+          "content": "À nhầm, của Elon Musk."
+        },
+        {
+          "role": "user",
+          "content": "Chỉ lấy 2 tweet thôi."
+        }
+      ],
+      "failure_type": "wrong_arg_value",
+      "expect": {
+        "tool_calls": [
+          {
+            "name": "timeline",
+            "args": {
+              "screenname": "elonmusk",
+              "limit": 2
+            }
+          }
+        ]
+      },
+      "metadata": {
+        "what_it_tests": "Multi-turn correction đồng thời đổi người và đổi limit; turn mới phải override turn cũ."
+      }
+    },
+    {
+      "id": "G10_multi_no_tool_after_cancel",
+      "phase": "B",
+      "turns": [
+        {
+          "role": "user",
+          "content": "Tìm tweet về Anthropic."
+        },
+        {
+          "role": "user",
+          "content": "Thôi bỏ đi."
+        },
+        {
+          "role": "user",
+          "content": "Chỉ nói ngắn gọn bạn có thể làm gì."
+        }
       ],
       "failure_type": "unnecessary_tool",
       "expect": {
-        "tool_calls": [{"name": "lookup", "args": {"query": "AI", "topic": "news", "timeframe": "day"}}]
+        "no_tool": true
       },
       "metadata": {
-        "skill": "multiturn_retract_tool",
-        "difficulty": "hard",
-        "what_it_tests": "Lượt 1 cần 2 tool, lượt 2 rút lại 1. Gọi thêm social_search là extra tool call → fail. Kiểm tra agent xử lý việc user THU HẸP yêu cầu, không chỉ mở rộng."
-      }
-    },
-    {
-      "id": "G10_switch_to_hn_midway",
-      "phase": "B",
-      "suite": "group",
-      "turns": [
-        {"role": "user", "content": "Tin tức AI hôm nay có gì?"},
-        {"role": "user", "content": "Cộng đồng Hacker News nói gì về nó?"}
-      ],
-      "failure_type": "wrong_tool",
-      "expect": {
-        "tool_calls": [{"name": "hn_top", "args": {"query": "AI"}}]
-      },
-      "metadata": {
-        "skill": "multiturn_switch_to_new_tool",
-        "difficulty": "hard",
-        "what_it_tests": "Đổi nguồn giữa hội thoại: lượt 1 là lookup, lượt 2 chuyển sang hn_top nhưng chủ đề 'nó' phải được resolve thành 'AI' từ lượt trước. Chỉ chấm lượt cuối nên không được gọi lại lookup."
+        "what_it_tests": "Multi-turn turn cuối là câu hỏi meta, không cần tool dù các turn trước có yêu cầu research."
       }
     }
   ]

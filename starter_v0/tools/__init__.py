@@ -17,6 +17,8 @@ from .policy.tool import search_company_policy
 from .social_search.tool import search_tweets
 from .send.tool import send_telegram
 from .lookup.tool import web_search
+from .dedupe_items.tool import remove_duplicate_items
+from .filter_items.tool import filter_result_items
 
 # Team-authored tools (G32).
 from .dedupe.tool import dedupe_items
@@ -44,6 +46,8 @@ TOOL_FUNCTIONS = {
     "hn_top": hacker_news_top,
     "dedupe": dedupe_items,
     "save_note": save_note,
+    "dedupe_items": remove_duplicate_items,
+    "filter_items": filter_result_items,
 }
 
 

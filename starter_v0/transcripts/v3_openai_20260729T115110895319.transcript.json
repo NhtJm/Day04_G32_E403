@@ -1,0 +1,16 @@
+{
+  "transcript_id": "v3_openai_20260729T115110895319",
+  "version": "v3",
+  "artifact_version": "v3+pfcedd51f6616+t60025e2e77f9",
+  "prompt_hash": "fcedd51f6616168125415c02a6aaf663ca6d5242e8788d583e5a8b5020365234",
+  "tools_hash": "60025e2e77f9e3ad28b5e77cc5ba3179f6dc1079db2ed21abd073ec9bbe6d79d",
+  "provider": "openai",
+  "model": null,
+  "system_prompt": "E:\\Code\\Vin_lab\\04\\Day04_G32_E403\\starter_v0\\artifacts\\ui_snapshots\\v3\\system_prompt.md",
+  "tools": "E:\\Code\\Vin_lab\\04\\Day04_G32_E403\\starter_v0\\artifacts\\ui_snapshots\\v3\\tools.yaml",
+  "history_window": 5,
+  "max_tool_rounds": 4,
+  "created_at": "2026-07-29T11:51:10",
+  "updated_at": "2026-07-29T11:51:10",
+  "turns": []
+}
