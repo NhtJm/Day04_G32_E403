@@ -1,4 +1,4 @@
-# starter_v0 — tool declarations (intentionally vague).
+# starter_v0 â€” tool declarations (intentionally vague).
 # Names and descriptions here are a rough first draft. Routing rules, name->handle
 # mapping, arg conventions (news/timeframe/Top), and the send-confirmation boundary
 # are NOT spelled out anywhere yet. Your job is to make these declarations + the
@@ -9,7 +9,7 @@
 tools:
   # ---------------- Core tools ----------------
   - name: clarify
-    description: "Gửi một câu hỏi cho người dùng."
+    description: "Gửi một câu hỏi cho người dùng khi thiếu thông tin bắt buộc hoặc cần xác nhận trước hành động nhạy cảm. Dùng tool này thay vì đoán."
     parameters:
       type: object
       properties:
@@ -19,7 +19,7 @@ tools:
       required: [question]
 
   - name: timeline
-    description: "Lấy các bài đăng gần đây."
+    description: "Lấy các bài đăng gần đây của một tài khoản cụ thể. Chỉ dùng khi đã biết rõ người hoặc handle; nếu user chưa nói rõ ai thì dùng clarify thay vì đoán."
     parameters:
       type: object
       properties:
@@ -38,18 +38,31 @@ tools:
       required: [query]
 
   - name: lookup
-    description: "Tra cứu thông tin trên internet."
+    description: "Tra cứu thông tin trên internet. Nếu user hỏi tin tức/thời sự/news trên web thì dùng tool này với topic='news'. Giữ query ngắn gọn chỉ là chủ đề chính như 'AI', 'OpenAI', 'robotics'; không nhét 'news', 'tin tức', 'hôm nay' vào query."
     parameters:
       type: object
       properties:
-        query: {type: string, default: "", description: "Truy vấn"}
-        topic: {type: string, enum: [general, news], default: "general", description: "Phân loại"}
-        timeframe: {type: string, enum: [day, week, month, year], default: "week", description: "Khoảng thời gian"}
-        max_results: {type: integer, default: 5, description: "Số kết quả"}
+        query:
+          type: string
+          description: "Từ khóa hoặc câu hỏi để tìm kiếm trên internet. Cần rõ ràng và súc tích; chỉ giữ chủ đề chính."
+        topic:
+          type: string
+          enum: [general, news]
+          default: "general"
+          description: "Phân loại tìm kiếm: 'news' cho tin tức thời sự cập nhật, 'general' cho kiến thức chung."
+        timeframe:
+          type: string
+          enum: [any, day, week, month, year]
+          default: "any"
+          description: "Giới hạn thời gian của bài viết. Dùng 'day' nếu user nói 'hôm nay'; dùng 'any' cho kiến thức chung."
+        max_results:
+          type: integer
+          default: 5
+          description: "Số lượng kết quả tìm kiếm trả về (từ 1 đến 10)."
       required: [query]
 
   - name: fetch
-    description: "Lấy nội dung từ một địa chỉ."
+    description: "Lấy nội dung từ một URL cụ thể. Chỉ dùng khi user đã cung cấp link/url rõ ràng. Nếu user nói 'bài này' hoặc 'link này' nhưng chưa có URL, phải dùng clarify để xin link."
     parameters:
       type: object
       properties:
@@ -79,7 +92,7 @@ tools:
 
   # ---------------- Bonus tools ----------------
   - name: send
-    description: "Gửi một đoạn văn bản đi."
+    description: "Gửi một đoạn văn bản đi. Đây là action tool nhạy cảm: chỉ dùng sau khi user đã xác nhận rõ muốn gửi ngay bây giờ. Nếu user mới yêu cầu đăng/gửi/chia sẻ mà chưa xác nhận, phải dùng clarify với response_type='yes_no' trước."
     parameters:
       type: object
       properties:
