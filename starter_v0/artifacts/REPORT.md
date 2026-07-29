@@ -51,10 +51,10 @@ Research agent dùng để tìm tin theo từ khóa, đọc URL cụ thể, lấ
 
 | Scenario | Tool trace cần thấy | Câu chuyện cải thiện version | Fallback run/transcript |
 |---|---|---|---|
-| Tìm tin web theo chủ đề | `lookup(query="robotics", topic="news", timeframe="day")` | `v2` sửa tách arg cho `lookup` đúng hơn so với `v0` | `runs/v2_B_base_openai_20260729T103234274597.json` |
+| Tìm tin web theo chủ đề | `lookup(query="robotics", topic="news", timeframe="day")` | `v2` sửa tách arg cho `lookup` đúng hơn so với `v0`; `v3` là mốc chốt để nộp | `runs/v2_B_base_openai_20260729T103234274597.json` |
 | Đọc đúng URL cụ thể | `fetch(url="https://openai.com/news")` | Sửa boundary để gặp URL thì dùng `fetch`, không `lookup` | `data/eval_group.json` + `runs/v1_B_group_openai_20260729T111313387315.json` |
 | Thiếu thông tin thì hỏi lại | `clarify(response_type="text")` hoặc `clarify(response_type="yes_no")` | `v1` và `v2` giảm lỗi missing-info, confirm-before-send | `runs/v1_B_base_openai_20260729T102837951898.json` |
-| Chat live tìm thông tin Trump | `lookup(query="Donald Trump", topic="general")` | `v3` dùng UI để chat và lưu transcript đầy đủ | `transcripts/v3_openai_20260729T110320049443.transcript.json` |
+| Chat live tìm thông tin Trump | `lookup(query="Donald Trump", topic="general")` | Transcript UI dùng để minh họa bản final `v3` | `transcripts/v3_openai_20260729T110320049443.transcript.json` |
 
 ---
 
@@ -69,7 +69,7 @@ Research agent dùng để tìm tin theo từ khóa, đọc URL cụ thể, lấ
 | `v0` | baseline | Đo hành vi ban đầu của agent trước khi tối ưu | `case_accuracy` |  | 0.65 | `runs/v0_B_base_openai_20260729T102502883119.json` |
 | `v1` | sửa `artifacts/system_prompt.md` | Nếu quy định rõ lúc nào phải `clarify` và không được tự `send` thì điểm base tăng rõ | `case_accuracy` | 0.65 | 0.85 | `runs/v1_B_base_openai_20260729T102837951898.json` |
 | `v2` | siết `system_prompt.md` + `artifacts/tools.yaml` | Nếu làm rõ routing, lookup args, missing-info và confirm boundary thì base có thể pass sạch | `case_accuracy` | 0.85 | 1.00 | `runs/v2_B_base_openai_20260729T103234274597.json` |
-| `v3` | thêm UI Streamlit + lưu transcript + explorer/compare | Nếu có UI quan sát tool trace thì demo và kiểm chứng chat thật dễ hơn | `chat_smoke` |  | pass | `transcripts/v3_openai_20260729T110320049443.transcript.json` |
+| `v3` | final release: chốt run cuối của `base` + `group` và dùng UI transcript làm bằng chứng demo | Nếu cả base và group đều đã có run pass sạch thì có thể đóng gói thành bản nộp cuối | `release_accuracy` | 1.00 | 1.00 | `runs/v2_B_base_openai_20260729T103234274597.json` + `runs/v1_B_group_openai_20260729T111313387315.json` |
 
 ## B2. Failure analysis
 
@@ -104,8 +104,8 @@ Research agent dùng để tìm tin theo từ khóa, đọc URL cụ thể, lấ
 
 | Scenario/Turn | Version | Tool Calls + Args | Transcript/Run | Outcome |
 |---|---|---|---|---|
-| Hỏi chung về Trump | `v3` | `lookup(query="Donald Trump", topic="general")` | `transcripts/v3_openai_20260729T110022307317.transcript.json` | Trả về danh sách nguồn web/video và tóm tắt ngắn |
-| Hỏi lại về Trump trên UI | `v3` | `lookup(query="Donald Trump", topic="general")` | `transcripts/v3_openai_20260729T110320049443.transcript.json` | UI hiển thị được tool trace, args và kết quả |
+| Hỏi chung về Trump | `v3 demo` | `lookup(query="Donald Trump", topic="general")` | `transcripts/v3_openai_20260729T110022307317.transcript.json` | Trả về danh sách nguồn web/video và tóm tắt ngắn |
+| Hỏi lại về Trump trên UI | `v3 demo` | `lookup(query="Donald Trump", topic="general")` | `transcripts/v3_openai_20260729T110320049443.transcript.json` | UI hiển thị được tool trace, args và kết quả |
 
 ## B5. Tool capability evidence
 
