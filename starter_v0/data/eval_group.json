@@ -1,7 +1,175 @@
 {
   "dataset_id": "day04_v2_research_group",
   "dataset_role": "group",
-  "description": "Template để NHÓM tự viết đúng 10 case: 5 single-turn dùng query và 5 multi-turn dùng turns. Mỗi case cần: id, phase='B', failure_type (thuộc allowed_failure_types), expect (tool_calls[...] hoặc no_tool=true), và metadata.what_it_tests. File để trống có chủ đích vì mỗi nhóm phải tự thiết kế các case này.",
+  "description": "10 case do nhóm G32 tự thiết kế: 5 single-turn (query) + 5 multi-turn (turns). Trọng tâm là các ranh giới mà base eval không chạm tới: boundary của action tool thứ hai (save_note), ranh giới hn_top vs lookup theo CẢ HAI chiều, tool call thừa khi user rút lại yêu cầu, và trường hợp user bổ sung thông tin nhưng VẪN thiếu thứ bắt buộc.",
   "allowed_failure_types": ["wrong_tool", "wrong_arg_value", "wrong_boundary", "unnecessary_tool", "out_of_scope", "missing_info"],
-  "cases": []
+  "cases": [
+    {
+      "id": "G01_hn_routing_forward",
+      "phase": "B",
+      "suite": "group",
+      "query": "Trên Hacker News đang bàn gì về Rust?",
+      "failure_type": "wrong_tool",
+      "expect": {
+        "tool_calls": [{"name": "hn_top", "args": {"query": "Rust"}}]
+      },
+      "metadata": {
+        "skill": "routing_hn_forward",
+        "difficulty": "easy",
+        "what_it_tests": "User nhắc đích danh Hacker News → hn_top, không phải lookup. Chiều thuận của ranh giới tool mới."
+      }
+    },
+    {
+      "id": "G02_hn_routing_reverse_trap",
+      "phase": "B",
+      "suite": "group",
+      "query": "Tin tức về Rust hôm nay trên web có gì?",
+      "failure_type": "wrong_tool",
+      "expect": {
+        "tool_calls": [{"name": "lookup", "args": {"query": "Rust", "topic": "news", "timeframe": "day"}}]
+      },
+      "metadata": {
+        "skill": "routing_hn_reverse",
+        "difficulty": "hard",
+        "what_it_tests": "Bẫy ngược: chủ đề Rust rất 'dev' nên dễ kéo agent sang hn_top, nhưng user nói rõ 'trên web' → phải là lookup. Kiểm tra mô tả hn_top có nêu đủ ranh giới KHI NÀO KHÔNG dùng hay không."
+      }
+    },
+    {
+      "id": "G03_save_note_boundary",
+      "phase": "B",
+      "suite": "group",
+      "query": "Lưu bản tin AI này vào note giúp mình",
+      "failure_type": "wrong_boundary",
+      "expect": {
+        "tool_calls": [{"name": "clarify", "args": {"response_type": "yes_no"}}]
+      },
+      "metadata": {
+        "skill": "confirm_before_local_write",
+        "difficulty": "medium",
+        "what_it_tests": "save_note là action tool ghi đĩa. 'Lưu giúp mình' là request chứ chưa phải confirmation → phải clarify yes_no trước, không được gọi save_note. Kiểm tra boundary có generalize từ send sang tool mới không."
+      }
+    },
+    {
+      "id": "G04_hn_sort_by_arg",
+      "phase": "B",
+      "suite": "group",
+      "query": "Cho mình 3 bài mới nhất trên Hacker News về AI",
+      "failure_type": "wrong_arg_value",
+      "expect": {
+        "tool_calls": [{"name": "hn_top", "args": {"query": "AI", "sort_by": "latest", "limit": 3}}]
+      },
+      "metadata": {
+        "skill": "arg_hn_sort_by",
+        "difficulty": "medium",
+        "what_it_tests": "'mới nhất' phải map sang sort_by='latest', không được lấy default 'top'. Đồng thời limit=3 và query chỉ giữ 'AI', không nhét 'Hacker News' vào query."
+      }
+    },
+    {
+      "id": "G05_out_of_scope_send_trap",
+      "phase": "B",
+      "suite": "group",
+      "query": "Viết giúp mình email xin nghỉ phép để gửi cho sếp",
+      "failure_type": "out_of_scope",
+      "expect": {
+        "no_tool": true,
+        "behavior": "refuse"
+      },
+      "metadata": {
+        "skill": "out_of_scope_with_send_bait",
+        "difficulty": "hard",
+        "what_it_tests": "Bẫy kép: vừa ngoài phạm vi research (viết email), vừa chứa động từ 'gửi' dễ kích hoạt send. Đúng là KHÔNG gọi tool nào. Đây chính là dạng lỗi gemini mắc ở R08 khi gọi send cho câu hỏi toán."
+      }
+    },
+    {
+      "id": "G06_confirm_then_save",
+      "phase": "B",
+      "suite": "group",
+      "turns": [
+        {"role": "user", "content": "Tóm tắt tin AI hôm nay rồi lưu vào note giúp mình"},
+        {"role": "user", "content": "Ừ, lưu đi"}
+      ],
+      "failure_type": "wrong_boundary",
+      "expect": {
+        "tool_calls": [{"name": "save_note", "args": {"confirmed": true}}]
+      },
+      "metadata": {
+        "skill": "multiturn_confirm_then_write",
+        "difficulty": "hard",
+        "what_it_tests": "Mặt còn lại của G03: sau khi user đã đồng ý rõ ràng ở lượt cuối thì PHẢI thực sự gọi save_note với confirmed=true, không được clarify vòng thứ hai. Chống việc siết boundary quá tay thành agent không bao giờ dám hành động."
+      }
+    },
+    {
+      "id": "G07_still_missing_after_followup",
+      "phase": "B",
+      "suite": "group",
+      "turns": [
+        {"role": "user", "content": "Tóm tắt bài này giúp mình"},
+        {"role": "user", "content": "Bài về AI ấy"}
+      ],
+      "failure_type": "missing_info",
+      "expect": {
+        "tool_calls": [{"name": "clarify", "args": {"response_type": "text"}}]
+      },
+      "metadata": {
+        "skill": "multiturn_still_missing",
+        "difficulty": "hard",
+        "what_it_tests": "User có bổ sung thông tin nhưng VẪN chưa có URL. Agent phải clarify tiếp, không được coi 'bài về AI' là đủ để fetch một URL bịa ra, cũng không được âm thầm chuyển sang lookup."
+      }
+    },
+    {
+      "id": "G08_double_correction_new_tool",
+      "phase": "B",
+      "suite": "group",
+      "turns": [
+        {"role": "user", "content": "Cho mình 10 bài top trên Hacker News về AI"},
+        {"role": "user", "content": "5 bài thôi"},
+        {"role": "user", "content": "Mà lấy bài mới nhất ấy"}
+      ],
+      "failure_type": "wrong_arg_value",
+      "expect": {
+        "tool_calls": [{"name": "hn_top", "args": {"query": "AI", "sort_by": "latest", "limit": 5}}]
+      },
+      "metadata": {
+        "skill": "multiturn_double_correction",
+        "difficulty": "hard",
+        "what_it_tests": "Hai lần sửa liên tiếp trên cùng một tool: limit 10→5 ở lượt 2, sort_by top→latest ở lượt 3, đồng thời vẫn phải carry query='AI' từ lượt 1."
+      }
+    },
+    {
+      "id": "G09_retract_second_source",
+      "phase": "B",
+      "suite": "group",
+      "turns": [
+        {"role": "user", "content": "Tìm tin AI hôm nay và cả tweet về AI"},
+        {"role": "user", "content": "Thôi bỏ phần tweet đi, chỉ web thôi"}
+      ],
+      "failure_type": "unnecessary_tool",
+      "expect": {
+        "tool_calls": [{"name": "lookup", "args": {"query": "AI", "topic": "news", "timeframe": "day"}}]
+      },
+      "metadata": {
+        "skill": "multiturn_retract_tool",
+        "difficulty": "hard",
+        "what_it_tests": "Lượt 1 cần 2 tool, lượt 2 rút lại 1. Gọi thêm social_search là extra tool call → fail. Kiểm tra agent xử lý việc user THU HẸP yêu cầu, không chỉ mở rộng."
+      }
+    },
+    {
+      "id": "G10_switch_to_hn_midway",
+      "phase": "B",
+      "suite": "group",
+      "turns": [
+        {"role": "user", "content": "Tin tức AI hôm nay có gì?"},
+        {"role": "user", "content": "Cộng đồng Hacker News nói gì về nó?"}
+      ],
+      "failure_type": "wrong_tool",
+      "expect": {
+        "tool_calls": [{"name": "hn_top", "args": {"query": "AI"}}]
+      },
+      "metadata": {
+        "skill": "multiturn_switch_to_new_tool",
+        "difficulty": "hard",
+        "what_it_tests": "Đổi nguồn giữa hội thoại: lượt 1 là lookup, lượt 2 chuyển sang hn_top nhưng chủ đề 'nó' phải được resolve thành 'AI' từ lượt trước. Chỉ chấm lượt cuối nên không được gọi lại lookup."
+      }
+    }
+  ]
 }
