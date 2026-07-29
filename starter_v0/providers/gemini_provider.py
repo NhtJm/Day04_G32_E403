@@ -2,9 +2,36 @@ from __future__ import annotations
 
 import json
 import os
+import re
+import time
 from typing import Any
 
 from providers.base import ModelResponse, ToolCall
+
+# Gemini free tier allows 5 requests/minute/model. Without pacing, a 20-case eval
+# burns the quota after case 5 and the rest come back as 429 provider errors,
+# which makes `measured_cases < total_cases` and invalidates every metric.
+_MIN_INTERVAL_SEC = float(os.getenv("GEMINI_MIN_INTERVAL_SEC", "13"))
+_MAX_RETRIES = int(os.getenv("GEMINI_MAX_RETRIES", "4"))
+_last_call_at = 0.0
+
+
+def _throttle() -> None:
+    global _last_call_at
+    wait = _last_call_at + _MIN_INTERVAL_SEC - time.monotonic()
+    if wait > 0:
+        time.sleep(wait)
+    _last_call_at = time.monotonic()
+
+
+def _retry_delay_from(exc: Exception) -> float | None:
+    match = re.search(r"'retryDelay':\s*'(\d+(?:\.\d+)?)s'", str(exc))
+    return float(match.group(1)) if match else None
+
+
+def _is_rate_limited(exc: Exception) -> bool:
+    text = str(exc)
+    return "429" in text or "RESOURCE_EXHAUSTED" in text
 
 
 def _to_gemini_declarations(tools: list[dict[str, Any]] | None) -> list[dict[str, Any]]:
@@ -104,13 +131,29 @@ class GeminiProvider:
             config_kwargs["system_instruction"] = system_instruction
         if declarations:
             config_kwargs["tools"] = [types.Tool(function_declarations=declarations)]
+            # Mirror the other providers: "required" must actually force a tool call,
+            # otherwise Gemini runs under AUTO while OpenAI/Anthropic run under ANY
+            # and the two runs are not comparable.
+            mode = "ANY" if tool_choice == "required" else "AUTO"
+            config_kwargs["tool_config"] = types.ToolConfig(
+                function_calling_config=types.FunctionCallingConfig(mode=mode)
+            )
 
         client = genai.Client(api_key=api_key)
-        resp = client.models.generate_content(
-            model=model or self.default_model,
-            contents=contents,
-            config=types.GenerateContentConfig(**config_kwargs),
-        )
+        resp = None
+        for attempt in range(_MAX_RETRIES):
+            _throttle()
+            try:
+                resp = client.models.generate_content(
+                    model=model or self.default_model,
+                    contents=contents,
+                    config=types.GenerateContentConfig(**config_kwargs),
+                )
+                break
+            except Exception as exc:
+                if not _is_rate_limited(exc) or attempt == _MAX_RETRIES - 1:
+                    raise
+                time.sleep((_retry_delay_from(exc) or 2 ** attempt * 15) + 1)
 
         text_parts: list[str] = []
         calls: list[ToolCall] = []
