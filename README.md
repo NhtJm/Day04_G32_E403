@@ -1,5 +1,16 @@
 # Day 04 Lab v2 — Research Agent Tool Eval
 
+## Members of G32
+
+| Họ và tên | MSSV |
+| --- | --- |
+| Nguyễn Đình Phúc | 2A202601835 |
+| Nguyễn Thế Khải | 2A202601099 |
+| Vũ Minh Đức | 2A202602006 |
+| Nguyễn Đức Thiện | 2A202601415 |
+| Nguyễn Hữu Kiên | 2A202601033 |
+| Trần Nguyễn Thế Nhật | 2A202601155 |
+
 ## Brief
 
 Trong lab này, nhóm build một research agent nhỏ nhưng chạy thật. Agent nhận request của user, chọn tool, truyền arguments, chạy tool thật, lưu full JSON log, rồi dùng log đó để tối ưu prompt/tool declaration qua nhiều version.
