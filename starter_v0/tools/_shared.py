@@ -23,7 +23,9 @@ def domain(url: str) -> str:
 
 
 def fold_text(text: str) -> str:
-    decomposed = unicodedata.normalize("NFD", text.lower())
+    # NFD does not decompose Vietnamese "đ"/"Đ" (it has no combining-mark form),
+    # so it must be folded to "d" explicitly before stripping combining marks.
+    decomposed = unicodedata.normalize("NFD", text.lower().replace("đ", "d"))
     return "".join(ch for ch in decomposed if unicodedata.category(ch) != "Mn")
 
 
