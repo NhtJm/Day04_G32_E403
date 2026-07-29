@@ -18,6 +18,11 @@ from .social_search.tool import search_tweets
 from .send.tool import send_telegram
 from .lookup.tool import web_search
 
+# Team-authored tools (G32).
+from .dedupe.tool import dedupe_items
+from .hn_top.tool import hacker_news_top
+from .save_note.tool import save_note
+
 
 # NOTE (starter_v0): tool names here are intentionally vague. These keys are the
 # names the model sees AND the names data/eval_base.json + data/eval_research_extension.json
@@ -35,6 +40,10 @@ TOOL_FUNCTIONS = {
     "policy": search_company_policy,
     "papers": arxiv_search,
     "paper_text": get_arxiv_paper_text,
+    # Team-authored tools (G32).
+    "hn_top": hacker_news_top,
+    "dedupe": dedupe_items,
+    "save_note": save_note,
 }
 
 
